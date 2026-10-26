@@ -447,8 +447,11 @@ defmodule Plausible.Sites do
 
   defp fetch_segment_id_for_site(id, _site) when id in [nil, ""], do: nil
 
+  # Segment IDs are PostgreSQL bigints; larger numbers cannot name a segment.
+  @max_segment_id 9_223_372_036_854_775_807
+
   defp fetch_segment_id_for_site(id, site) do
-    with {int, ""} when int > 0 <- Integer.parse(to_string(id)),
+    with {int, ""} when int > 0 and int <= @max_segment_id <- Integer.parse(to_string(id)),
          %{id: segment_id} <-
            Repo.get_by(Plausible.Segments.Segment, id: int, site_id: site.id) do
       segment_id
