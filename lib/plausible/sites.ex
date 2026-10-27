@@ -450,7 +450,7 @@ defmodule Plausible.Sites do
   # Segment IDs are PostgreSQL bigints; larger numbers cannot name a segment.
   @max_segment_id 9_223_372_036_854_775_807
 
-  defp fetch_segment_id_for_site(id, site) do
+  defp fetch_segment_id_for_site(id, site) when is_binary(id) or is_integer(id) do
     with {int, ""} when int > 0 and int <= @max_segment_id <- Integer.parse(to_string(id)),
          %{id: segment_id} <-
            Repo.get_by(Plausible.Segments.Segment, id: int, site_id: site.id) do
@@ -459,6 +459,9 @@ defmodule Plausible.Sites do
       _ -> nil
     end
   end
+
+  # Any other shape, such as a map or a list from crafted form params, names no segment.
+  defp fetch_segment_id_for_site(_id, _site), do: nil
 
   def shared_link_url(site, link) do
     base = PlausibleWeb.Endpoint.url()
